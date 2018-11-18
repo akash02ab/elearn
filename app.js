@@ -13,34 +13,11 @@ var async = require('async');
 var localStrategy = require('passport-local'),Strategy;
 var mongo = require('mongodb');
 var mongoose = require('mongoose');
-// const MongoStore = require('connect-mongo')(session);
+const MongoStore = require('connect-mongo')(session);
 
 var app = express();
 
-mongoose.Promise = global.Promise;
-
-// Use the session middleware
-app.use(session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }}))
-
-// Access the session as req.session
-app.get('/', function(req, res, next) {
-  if (req.session.views) {
-    req.session.views++
-    res.setHeader('Content-Type', 'text/html')
-    res.write('<p>views: ' + req.session.views + '</p>')
-    res.write('<p>expires in: ' + (req.session.cookie.maxAge / 1000) + 's</p>')
-    res.end()
-  } else {
-    req.session.views = 1
-    res.end('welcome to the session demo. refresh!')
-  }
-});
-
-mongoose.connect('mongodb://localhost/elearn');
-
-// app.use(session({
-//     store: new MongoStore({ mongooseConnection: mongoose.connection })
-// }));
+//mongoose.connect('mongodb://localhost/elearn');
 
 var db = mongoose.connection;
 
@@ -64,10 +41,21 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 //Express session
+// app.use(session({
+//   secret: 'secret',
+//   saveUninitialized: true,
+//   resave: true
+// }));
+app.set('trust proxy', 1);
 app.use(session({
-  secret: 'secret',
-  saveUninitialized: true,
-  resave: true
+    secret: 'keyboard cat',
+    saveUninitialized: false, // don't create session until something stored
+    resave: false, //don't save session if unmodified
+    cookie: { secure: true },
+    store: new MongoStore({
+        url: 'mongodb://localhost/elearn',
+        touchAfter: 24 * 3600 // time period in seconds
+    })
 }));
 
 //passport
@@ -148,6 +136,11 @@ app.use(function(err, req, res, next){
     message: err.message,
     error: {}
   });
+});
+
+//Server
+app.listen(3000, function(){
+  console.log('Server Stated on Port 3000');
 });
 
 module.exports = app;
