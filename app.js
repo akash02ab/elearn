@@ -17,8 +17,6 @@ const MongoStore = require('connect-mongo')(session);
 
 var app = express();
 
-//mongoose.connect('mongodb://localhost/elearn');
-
 var db = mongoose.connection;
 
 var routes = require('./routes/index');
@@ -46,6 +44,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 //   saveUninitialized: true,
 //   resave: true
 // }));
+
+//mongoose.connect('mongodb://localhost/elearn');
 app.set('trust proxy', 1);
 app.use(session({
     secret: 'keyboard cat',
@@ -86,8 +86,9 @@ app.use(flash());
 //Global Vars
 app.use(function(req, res, next){
   res.local.messages = require('express-messages')(req, res);
-  if(req.url == '/')
+  if(req.url == '/'){
    res.local.isHome = true;
+  }
   next();
 });
 
